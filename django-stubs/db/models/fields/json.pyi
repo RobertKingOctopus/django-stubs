@@ -1,10 +1,12 @@
 import json
-from typing import Any, Optional, Type
+from typing import Any, Dict, Optional, Type, Union
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import lookups
+from django.db.models.expressions import Expression
 from django.db.models.lookups import PostgresOperatorLookup, Transform
 from django.db.models.sql.compiler import SQLCompiler
+from django.utils.connection import ConnectionProxy
 
 from . import Field
 from .mixins import CheckFieldDefaultMixin
@@ -20,6 +22,12 @@ class JSONField(CheckFieldDefaultMixin, Field):
         decoder: Optional[Type[json.JSONDecoder]] = ...,
         **kwargs: Any
     ) -> None: ...
+    def from_db_value(
+        self,
+        value: Optional[str],
+        expression: Optional[Union[Field, Expression]],
+        connection: Optional[ConnectionProxy],
+    ) -> Optional[Dict]: ...
 
 class DataContains(PostgresOperatorLookup): ...
 class ContainedBy(PostgresOperatorLookup): ...

@@ -28,11 +28,10 @@ from django.db.models.query import QuerySet, RawQuerySet
 from django.forms.fields import EmailField
 from django.http.response import HttpResponse, HttpResponseBase
 from django.template.base import Template
-from django.test.client import Client
+from django.test.client import AsyncClient, Client
 from django.test.html import Element
 from django.test.utils import CaptureQueriesContext, ContextList
 from django.utils.functional import classproperty
-from django.utils.safestring import SafeString
 
 def to_list(value: Any) -> list[Any]: ...
 def assert_and_parse_html(self: Any, html: str, user_msg: str, msg: str) -> Element: ...
@@ -64,8 +63,10 @@ class _DatabaseFailure:
     def __call__(self) -> None: ...
 
 class SimpleTestCase(unittest.TestCase):
-    client_class: Any = ...
+    client_class: Type[Client] = ...
     client: Client
+    async_client_class: Type[AsyncClient] = ...
+    async_client: AsyncClient
     allow_database_queries: bool = ...
     # TODO: str -> Literal['__all__']
     databases: Union[Set[str], str] = ...
@@ -74,7 +75,7 @@ class SimpleTestCase(unittest.TestCase):
     def modify_settings(self, **kwargs: Any) -> Any: ...
     def assertRedirects(
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         expected_url: str,
         status_code: int = ...,
         target_status_code: int = ...,
@@ -92,7 +93,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertNotContains(
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         text: Union[bytes, str],
         status_code: int = ...,
         msg_prefix: str = ...,
@@ -100,7 +101,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertFormError(
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         form: str,
         field: Optional[str],
         errors: Union[List[str], str],
@@ -108,7 +109,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertFormsetError(
         self,
-        response: HttpResponse,
+        response: HttpResponseBase,
         formset: str,
         form_index: Optional[int],
         field: Optional[str],
@@ -117,13 +118,13 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertTemplateUsed(
         self,
-        response: Optional[Union[HttpResponse, str]] = ...,
+        response: Optional[Union[HttpResponseBase, str]] = ...,
         template_name: Optional[str] = ...,
         msg_prefix: str = ...,
         count: Optional[int] = ...,
     ) -> Optional[_AssertTemplateUsedContext]: ...
     def assertTemplateNotUsed(
-        self, response: Union[HttpResponse, str] = ..., template_name: Optional[str] = ..., msg_prefix: str = ...
+        self, response: Union[HttpResponseBase, str] = ..., template_name: Optional[str] = ..., msg_prefix: str = ...
     ) -> Optional[_AssertTemplateNotUsedContext]: ...
     def assertRaisesMessage(
         self, expected_exception: Type[Exception], expected_message: str, *args: Any, **kwargs: Any
@@ -142,9 +143,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> Any: ...
     def assertHTMLEqual(self, html1: str, html2: str, msg: Optional[str] = ...) -> None: ...
     def assertHTMLNotEqual(self, html1: str, html2: str, msg: Optional[str] = ...) -> None: ...
-    def assertInHTML(
-        self, needle: str, haystack: SafeString, count: Optional[int] = ..., msg_prefix: str = ...
-    ) -> None: ...
+    def assertInHTML(self, needle: str, haystack: str, count: Optional[int] = ..., msg_prefix: str = ...) -> None: ...
     def assertJSONEqual(
         self,
         raw: str,
